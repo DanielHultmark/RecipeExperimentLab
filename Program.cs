@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RecipeExperimentLab.Data;
+using RecipeExperimentLab.Models;
 using Scalar.AspNetCore;
 
 namespace RecipeExperimentLab
@@ -13,6 +15,10 @@ namespace RecipeExperimentLab
             // Add services to the container.
             builder.Services.AddDbContext<RecipeExperimentalLabDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+                .AddEntityFrameworkStores<RecipeExperimentalLabDbContext>()
+                .AddDefaultTokenProviders();
 
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

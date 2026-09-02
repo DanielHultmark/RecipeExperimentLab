@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using RecipeExperimentLab.Models;
 
 namespace RecipeExperimentLab.Data
 {
-    public class RecipeExperimentalLabDbContext : DbContext
+    public class RecipeExperimentalLabDbContext : IdentityDbContext<ApplicationUser>
     {
         public RecipeExperimentalLabDbContext(DbContextOptions<RecipeExperimentalLabDbContext> options)
             : base(options)
