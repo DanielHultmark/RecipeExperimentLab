@@ -1,4 +1,4 @@
-﻿namespace RecipeExperimentLab.Data
+﻿namespace RecipeExperimentLab.Models
 {
     public class Ingredient
     {
