@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>3562b2d5-9dc0-4890-bc7e-0df9f45f38d4</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="DTO\Ingredient\" />
+    <Folder Include="DTO\User\" />
     <Folder Include="Service\" />
   </ItemGroup>
 

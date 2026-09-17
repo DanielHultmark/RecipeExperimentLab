@@ -16,15 +16,37 @@ namespace RecipeExperimentLab
             builder.Services.AddDbContext<RecipeExperimentalLabDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-                .AddEntityFrameworkStores<RecipeExperimentalLabDbContext>()
-                .AddDefaultTokenProviders();
+            builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
+            {
+                options.SignIn.RequireConfirmedAccount = false;
+            });
+
+            if (builder.Environment.IsDevelopment())
+            {
+                builder.Services.ConfigureApplicationCookie(options =>
+                {
+                    options.Cookie.SameSite = SameSiteMode.None;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                });
+            };
 
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("Frontend", policy =>
+                {
+                    policy.WithOrigins(builder.Configuration["Frontend_Domain"]) // lägg domänen i User Secrets
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+                });
+            });
+
             var app = builder.Build();
+
+            app.UseCors("Frontend");
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -35,8 +57,10 @@ namespace RecipeExperimentLab
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
+            app.MapIdentityApi<ApplicationUser>();
 
             app.MapControllers();
 

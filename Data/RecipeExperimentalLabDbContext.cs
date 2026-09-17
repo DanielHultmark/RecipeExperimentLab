@@ -15,6 +15,7 @@ namespace RecipeExperimentLab.Data
         public DbSet<Recipe> Recipes { get; set; }
         public DbSet<Style> Styles { get; set; }
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+        public DbSet<RecipeIngredient> RecipeIngredients { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
