@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RecipeExperimentLab.Data;
 
@@ -11,9 +12,11 @@ using RecipeExperimentLab.Data;
 namespace RecipeExperimentLab.Migrations
 {
     [DbContext(typeof(RecipeExperimentalLabDbContext))]
-    partial class RecipeExperimentalLabDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260922082243_ReplacedRelationshipTable")]
+    partial class ReplacedRelationshipTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

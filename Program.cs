@@ -19,7 +19,9 @@ namespace RecipeExperimentLab
             builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
             {
                 options.SignIn.RequireConfirmedAccount = false;
-            });
+            })
+                .AddRoles<IdentityRole>()
+                .AddEntityFrameworkStores<RecipeExperimentalLabDbContext>();
 
             if (builder.Environment.IsDevelopment())
             {

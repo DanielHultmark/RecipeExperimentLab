@@ -21,6 +21,22 @@ namespace RecipeExperimentLab.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<RecipeIngredient>()
+                .HasKey(RecipeIngredient => new 
+                {
+                    RecipeIngredient.RecipeId, RecipeIngredient.IngredientId 
+                });
+
+            modelBuilder.Entity<RecipeIngredient>()
+                .HasOne(RecipeIngredient => RecipeIngredient.Recipe)
+                .WithMany(Recipe => Recipe.RecipeIngredients)
+                .HasForeignKey(RecipeIngredient => RecipeIngredient.RecipeId);
+
+            modelBuilder.Entity<RecipeIngredient>()
+                .HasOne(RecipeIngredient => RecipeIngredient.Ingredient)
+                .WithMany(Ingredient => Ingredient.RecipeIngredients)
+                .HasForeignKey(RecipeIngredient => RecipeIngredient.IngredientId);
+
             modelBuilder.Entity<Score>()
                 .HasData(
                     new Score { Id = 1, NumberScore = 1 },

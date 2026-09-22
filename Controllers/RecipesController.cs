@@ -8,11 +8,11 @@ namespace RecipeExperimentLab.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class RecipeController : Controller
+    public class RecipesController : ControllerBase
     {
         private readonly RecipeExperimentalLabDbContext _context;
 
-        public RecipeController(RecipeExperimentalLabDbContext context)
+        public RecipesController(RecipeExperimentalLabDbContext context)
         {
             _context = context;
         }
@@ -25,8 +25,8 @@ namespace RecipeExperimentLab.Controllers
                 {
                     Id = r.Id,
                     Name = r.Name,
-                    Style = r.Style.Name,
-                    Score = r.Score.Value,
+                    Style = r.Style.CookingStyle,
+                    Score = r.Score.NumberScore,
                     Review = r.Review,
                     Ingredients = r.RecipeIngredients.Select(ri => ri.Ingredient.Name).ToList()
                 })
@@ -37,7 +37,13 @@ namespace RecipeExperimentLab.Controllers
         [HttpGet("{id:int}")]
         public async Task<ActionResult<RecipeResponseDto>> GetRecipe(int id)
         {
-            var recipe = await GetRecipeDto
+            var recipe = await GetRecipeDto(id);
+
+            if (recipe == null)
+            {
+                return NotFound();
+            }
+            return Ok(recipe);
         }
 
         [HttpPost]
