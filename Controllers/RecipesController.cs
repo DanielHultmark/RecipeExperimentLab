@@ -8,6 +8,7 @@ namespace RecipeExperimentLab.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class RecipesController : ControllerBase
     {
         private readonly RecipeExperimentalLabDbContext _context;
@@ -86,7 +87,8 @@ namespace RecipeExperimentLab.Controllers
             };
             _context.Recipes.Add(recipe);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetRecipe), new { id = recipe.Id }, recipe);
+            var createdRecipe = await GetRecipeDto(recipe.Id);
+            return CreatedAtAction(nameof(GetRecipe), new { id = recipe.Id }, createdRecipe);
         }
 
         [HttpPut("{id:int}")]

@@ -1,10 +1,14 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using RecipeExperimentLab.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using RecipeExperimentLab.DTO.User;
 
 namespace RecipeExperimentLab.Controllers
 {
-    public class AccountController : Controller
+    [ApiController]
+    [Route("api/account")]
+    public class AccountController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -15,36 +19,99 @@ namespace RecipeExperimentLab.Controllers
             _signInManager = signInManager;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Register(string fullName, string email, string password)
+        [AllowAnonymous]
+        [HttpPost("register")]
+        public async Task<ActionResult<AccountResponsDto>> Register(RegisterRequestDto request)
         {
-            var user = new ApplicationUser { UserName = email, Email = email, FullName = fullName };
-            var result = await _userManager.CreateAsync(user, password);
-
-            if (result.Succeeded)
+            var existingUser = await _userManager.FindByEmailAsync(request.Email);
+            if (existingUser is not null)
             {
-                await _signInManager.SignInAsync(user, isPersistent: false);
-                return Ok("Användare registrering lyckades.");
+                return Conflict("Det finns redan en användare med den här e-postadressen.");
             }
 
-            foreach (var error in result.Errors)
+            var user = new ApplicationUser
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                UserName = request.Email,
+                Email = request.Email,
+                FullName = request.FullName
+            };
+
+            var result = await _userManager.CreateAsync(user, request.Password);
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
             }
-            return View();
+
+            var roleResult = await _userManager.AddToRoleAsync(user, "User");
+            if (!roleResult.Succeeded)
+            {
+                await _userManager.DeleteAsync(user);
+                return Problem("Kunde inte tilldela användarrollen.");
+            }
+
+            await _signInManager.SignInAsync(user, isPersistent: false);
+            return Ok(await CreateResponseAsync(user));
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Login(string email, string password)
+        [AllowAnonymous]
+        [HttpPost("login")]
+        public async Task<ActionResult<AccountResponsDto>> Login(LoginRequestDto request)
         {
-            var result = await _signInManager.PasswordSignInAsync(email, password, isPersistent: false, lockoutOnFailure: false);
-            if (result.Succeeded)
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user is null)
             {
-                return Ok("Användare inloggning lyckades.");
+                return Unauthorized("Felaktig e-postadress eller lösenord.");
             }
 
-            ModelState.AddModelError(string.Empty, "Felaktigt användarnamn eller lösenord.");
-            return View();
+            var result = await _signInManager.PasswordSignInAsync(
+                user,
+                request.Password,
+                isPersistent: false,
+                lockoutOnFailure: true);
+
+            if (!result.Succeeded)
+            {
+                return Unauthorized("Felaktig e-postadress eller lösenord.");
+            }
+
+            return Ok(await CreateResponseAsync(user));
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            await _signInManager.SignOutAsync();
+            return NoContent();
+        }
+
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<ActionResult<AccountResponsDto>> GetCurrentUser()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            return Ok(await CreateResponseAsync(user));
+        }
+
+        private async Task<AccountResponsDto> CreateResponseAsync(
+            ApplicationUser user)
+        {
+            var roles = await _userManager.GetRolesAsync(user);
+
+            return new AccountResponsDto
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                Email = user.Email ?? string.Empty,
+                Roles = roles.ToList()
+            };
         }
     }
 }

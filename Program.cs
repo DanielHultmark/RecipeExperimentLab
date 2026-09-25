@@ -42,7 +42,8 @@ namespace RecipeExperimentLab
                 {
                     policy.WithOrigins(builder.Configuration["Frontend_Domain"]) // lägg domänen i User Secrets
                     .AllowAnyHeader()
-                    .AllowAnyMethod();
+                    .AllowAnyMethod()
+                    .AllowCredentials();
                 });
             });
 
@@ -70,8 +71,6 @@ namespace RecipeExperimentLab
 
             app.UseAuthentication();
             app.UseAuthorization();
-
-            app.MapIdentityApi<ApplicationUser>();
 
             app.MapControllers();
 
