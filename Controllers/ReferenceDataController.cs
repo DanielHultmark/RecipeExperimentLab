@@ -17,7 +17,7 @@ namespace RecipeExperimentLab.Controllers
             _context = context;
         }
 
-        [HttpGet("Ingredients")]
+        [HttpGet("ingredients")]
         public async Task<IActionResult> GetIngredients()
         {
             var ingredients = await _context.Ingredients
