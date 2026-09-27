@@ -8,7 +8,6 @@ namespace RecipeExperimentLab.DTO.Recepie
         [StringLength(100)]
         public string Name { get; set; } = string.Empty;
 
-        [Range(typeof(decimal), "0.01", "999999")]
         public decimal Amount { get; set; }
 
         [Required]

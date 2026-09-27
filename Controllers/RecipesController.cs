@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using RecipeExperimentLab.Data;
 using RecipeExperimentLab.DTO.Recepie;
 using RecipeExperimentLab.Models;
+using RecipeExperimentLab.Services;
 
 namespace RecipeExperimentLab.Controllers;
 
@@ -14,7 +15,12 @@ namespace RecipeExperimentLab.Controllers;
 public class RecipesController : ControllerBase
 {
     private readonly RecipeExperimentalLabDbContext _context;
-    public RecipesController(RecipeExperimentalLabDbContext context) => _context = context;
+    private readonly RecipeService _recipeService;
+    public RecipesController(RecipeExperimentalLabDbContext context, RecipeService recipeService)
+    {
+        _context = context;
+        _recipeService = recipeService;
+    }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<RecipeResponseDto>>> GetAll() =>
@@ -33,14 +39,14 @@ public class RecipesController : ControllerBase
     {
         var userId = GetCurrentUserId();
         if (userId is null) return Unauthorized();
-        var error = await ValidateRecipeAsync(recipeDto);
+        var error = await _recipeService.ValidateRecipeAsync(recipeDto);
         if (error is not null) return BadRequest(error);
 
         var recipe = new Recipe
         {
             Name = recipeDto.Name.Trim(), StyleId = recipeDto.StyleId,
             ScoreId = recipeDto.ScoreId, Review = recipeDto.Review?.Trim(), UserId = userId,
-            RecipeIngredients = await BuildRecipeIngredientsAsync(recipeDto.Ingredients)
+            RecipeIngredients = await _recipeService.BuildRecipeIngredientsAsync(recipeDto.Ingredients)
         };
         _context.Recipes.Add(recipe);
         await _context.SaveChangesAsync();
@@ -54,7 +60,7 @@ public class RecipesController : ControllerBase
             .FirstOrDefaultAsync(recipe => recipe.Id == id);
         if (recipe is null) return NotFound();
         if (!CanManageRecipe(recipe)) return Forbid();
-        var error = await ValidateRecipeAsync(recipeDto);
+        var error = await _recipeService.ValidateRecipeAsync(recipeDto);
         if (error is not null) return BadRequest(error);
 
         recipe.Name = recipeDto.Name.Trim();
@@ -62,7 +68,7 @@ public class RecipesController : ControllerBase
         recipe.ScoreId = recipeDto.ScoreId;
         recipe.Review = recipeDto.Review?.Trim();
         _context.RecipeIngredients.RemoveRange(recipe.RecipeIngredients);
-        recipe.RecipeIngredients = await BuildRecipeIngredientsAsync(recipeDto.Ingredients);
+        recipe.RecipeIngredients = await _recipeService.BuildRecipeIngredientsAsync(recipeDto.Ingredients);
         await _context.SaveChangesAsync();
         return NoContent();
     }
@@ -76,37 +82,6 @@ public class RecipesController : ControllerBase
         _context.Recipes.Remove(recipe);
         await _context.SaveChangesAsync();
         return NoContent();
-    }
-
-    private async Task<string?> ValidateRecipeAsync(RecipeRequestDto recipeDto)
-    {
-        if (string.IsNullOrWhiteSpace(recipeDto.Name)) return "Recipe name is required.";
-        if (recipeDto.Ingredients.Count == 0) return "At least one ingredient is required.";
-        if (recipeDto.Ingredients.Any(item => string.IsNullOrWhiteSpace(item.Name) || string.IsNullOrWhiteSpace(item.Unit) || item.Amount <= 0))
-            return "Every ingredient requires a name, amount and unit.";
-        if (recipeDto.Ingredients.Select(item => item.Name.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).Count() != recipeDto.Ingredients.Count)
-            return "The same ingredient can only be added once.";
-        if (!await _context.Styles.AnyAsync(style => style.Id == recipeDto.StyleId)) return "Invalid style ID.";
-        if (!await _context.Scores.AnyAsync(score => score.Id == recipeDto.ScoreId)) return "Invalid score ID.";
-        return null;
-    }
-
-    private async Task<List<RecipeIngredient>> BuildRecipeIngredientsAsync(IEnumerable<RecipeIngredientRequestDto> ingredients)
-    {
-        var result = new List<RecipeIngredient>();
-        var sortOrder = 0;
-        foreach (var request in ingredients)
-        {
-            var name = request.Name.Trim();
-            var ingredient = await _context.Ingredients.FirstOrDefaultAsync(item => item.Name.ToLower() == name.ToLower());
-            if (ingredient is null)
-            {
-                ingredient = new Ingredient { Name = name };
-                _context.Ingredients.Add(ingredient);
-            }
-            result.Add(new RecipeIngredient { Ingredient = ingredient, Amount = request.Amount, Unit = request.Unit.Trim(), SortOrder = sortOrder++ });
-        }
-        return result;
     }
 
     private string? GetCurrentUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier);

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RecipeExperimentLab.Data;
 using RecipeExperimentLab.Models;
+using RecipeExperimentLab.Services;
 using Scalar.AspNetCore;
 
 namespace RecipeExperimentLab
@@ -33,6 +34,7 @@ namespace RecipeExperimentLab
             };
 
             builder.Services.AddControllers();
+            builder.Services.AddScoped<RecipeService>();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
