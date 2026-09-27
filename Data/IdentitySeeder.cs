@@ -34,15 +34,16 @@ namespace RecipeExperimentLab.Data
             var email = configuration["Admin:Email"];
             var password = configuration["Admin:Password"];
 
-            if (string.IsNullOrWhiteSpace(email) || 
+            if (string.IsNullOrWhiteSpace(email) ||
                 string.IsNullOrWhiteSpace(password))
             {
                 return;
             }
 
-            var admin = await userManager.FindByEmailAsync(email);
+            var admin = await userManager.FindByEmailAsync(email) 
+                ?? await userManager.FindByNameAsync(email);
 
-            if (admin == null) 
+            if (admin == null)
             {
                 admin = new ApplicationUser
                 {
@@ -62,6 +63,29 @@ namespace RecipeExperimentLab.Data
 
                     throw new InvalidOperationException($"Kunde inte skapa Admin {errors}");
                 }
+            }
+
+            if (configuration.GetValue<bool>("Admin:ResetPassword"))
+            {
+                var resetToken = await userManager.GeneratePasswordResetTokenAsync(admin);
+
+                var resetResult = await userManager.ResetPasswordAsync(
+                    admin,
+                    resetToken,
+                    password);
+
+                if (!resetResult.Succeeded)
+                {
+                    var errors = string.Join(
+                        ", ",
+                        resetResult.Errors.Select(error => error.Description));
+
+                    throw new InvalidOperationException(
+                        $"Kunde inte återställa adminlösenordet: {errors}");
+                }
+
+                await userManager.ResetAccessFailedCountAsync(admin);
+                await userManager.SetLockoutEndDateAsync(admin, null);
             }
 
             if (!await userManager.IsInRoleAsync(admin, adminRole))

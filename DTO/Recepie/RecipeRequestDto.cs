@@ -18,6 +18,7 @@ namespace RecipeExperimentLab.DTO.Recepie
         public string? Review { get; set; }
 
         [Required]
-        public List<int> IngredientIds { get; set; } = new List<int>();
+        [MinLength(1)]
+        public List<RecipeIngredientRequestDto> Ingredients { get; set; } = [];
     }
 }

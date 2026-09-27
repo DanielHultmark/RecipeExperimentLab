@@ -14,7 +14,7 @@ namespace RecipeExperimentLab
 
             // Add services to the container.
             builder.Services.AddDbContext<RecipeExperimentalLabDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), sql => sql.EnableRetryOnFailure()));
 
             builder.Services.AddIdentityApiEndpoints<ApplicationUser>(options =>
             {
@@ -40,7 +40,9 @@ namespace RecipeExperimentLab
             {
                 options.AddPolicy("Frontend", policy =>
                 {
-                    policy.WithOrigins(builder.Configuration["Frontend_Domain"]) // lägg domänen i User Secrets
+                    var frontendOrigin = builder.Configuration["Frontend_Domain"];
+                    if (string.IsNullOrWhiteSpace(frontendOrigin)) return;
+                    policy.WithOrigins(frontendOrigin)
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();
@@ -68,6 +70,10 @@ namespace RecipeExperimentLab
             }
 
             app.UseHttpsRedirection();
+
+            // The frontend is built separately and copied here only when publishing.
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
 
             app.UseAuthentication();
             app.UseAuthorization();

@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RecipeExperimentLab.Data;
+using RecipeExperimentLab.DTO.ReferenceData;
+using RecipeExperimentLab.Models;
 
 namespace RecipeExperimentLab.Controllers
 {
@@ -60,6 +62,26 @@ namespace RecipeExperimentLab.Controllers
                 .ToListAsync();
 
             return Ok(scores);
+        }
+
+        [HttpPost("styles")]
+        public async Task<IActionResult> CreateStyle(CreateReferenceDataDto request)
+        {
+            var name = request.Name.Trim();
+
+            var style = await _context.Styles
+                .FirstOrDefaultAsync(style => style.CookingStyle.ToLower() == name.ToLower());
+
+            if (style is not null)
+            {
+                return Ok(new { style.Id, Name = style.CookingStyle });
+            }
+
+            style = new Style { CookingStyle = name };
+            _context.Styles.Add(style);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetStyles), new { style.Id, Name = style.CookingStyle });
         }
     }
 }

@@ -21,6 +21,12 @@ namespace RecipeExperimentLab.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<Recipe>()
+                .HasOne(Recipe => Recipe.Style)
+                .WithMany()
+                .HasForeignKey(Recipe => Recipe.StyleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<RecipeIngredient>()
                 .HasKey(RecipeIngredient => new 
                 {
@@ -36,6 +42,10 @@ namespace RecipeExperimentLab.Data
                 .HasOne(RecipeIngredient => RecipeIngredient.Ingredient)
                 .WithMany(Ingredient => Ingredient.RecipeIngredients)
                 .HasForeignKey(RecipeIngredient => RecipeIngredient.IngredientId);
+
+            modelBuilder.Entity<RecipeIngredient>()
+                .Property(recipeIngredient => recipeIngredient.Amount)
+                .HasPrecision(10, 2);
 
             modelBuilder.Entity<Score>()
                 .HasData(
